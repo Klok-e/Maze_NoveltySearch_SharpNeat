@@ -52,7 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _seed: 42
-  _width: 20
-  _height: 20
+  _width: 10
+  _height: 10
   _cellPrefab: {fileID: 1369001990422904, guid: 2a69d3756a0a81e4c98309c13645ee02,
     type: 2}

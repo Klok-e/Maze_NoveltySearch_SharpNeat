@@ -13,72 +13,101 @@ using SharpNeat.EvolutionAlgorithms.ComplexityRegulation;
 using SharpNeat.Core;
 using SharpNeat.Phenomes;
 using UnityEngine;
+using System.Threading;
+using System.Collections;
 
 namespace Scripts.Evolution
 {
     internal class Evolutor : MonoBehaviour
     {
-        [SerializeField] private Containers.IntReference _inputCount;
-        [SerializeField] private Containers.IntReference _outputCount;
-        [SerializeField] private Containers.IntReference _complexityThreshold;
-        [SerializeField] private Containers.IntReference _populationSize;
-        [SerializeField] private Containers.IntReference _specieCount;
-        [SerializeField] private Containers.IntReference _elitismProportion;
+        [SerializeField] private ScriptableObjects.Containers.IntContainer _tickPerEvalCount;
 
-        [SerializeField] private Containers.FloatReference _AddConnectionMutationProbability;
-        [SerializeField] private Containers.FloatReference _DeleteConnectionMutationProbability;
-        [SerializeField] private Containers.FloatReference _AddNodeMutationProbability;
-        [SerializeField] private Containers.FloatReference _ConnectionWeightMutationProbability;
-        [SerializeField] private Containers.FloatReference _InitialInterconnectionsProportion;
+        [SerializeField] private ScriptableObjects.Containers.IntContainer _inputCount;
+        [SerializeField] private ScriptableObjects.Containers.IntContainer _outputCount;
+        [SerializeField] private int _complexityThreshold;
+        [SerializeField] private int _populationSize;
+        [SerializeField] private int _specieCount;
+
+        [SerializeField] private float _elitismProportion;
+        [SerializeField] private float _AddConnectionMutationProbability;
+        [SerializeField] private float _DeleteConnectionMutationProbability;
+        [SerializeField] private float _AddNodeMutationProbability;
+        [SerializeField] private float _ConnectionWeightMutationProbability;
+        [SerializeField] private float _InitialInterconnectionsProportion;
+
+        [SerializeField] private GameObject _agentPref;
 
         private NeatEvolutionAlgorithmParameters _eaParams;
         private NeatGenomeParameters _neatGenomeParams;
         private NetworkActivationScheme _activationScheme;
+        private IGenomeListEvaluator<NeatGenome> _evaluator;
 
         private NeatEvolutionAlgorithm<NeatGenome> _ea;
 
-        public void Start()
+        public IEnumerator Start()
         {
-            Debug.Assert(_populationSize.Value > 5);
+            Debug.Assert(_populationSize > 5);
+            Debug.Log($"Main thread is {Thread.CurrentThread.ManagedThreadId}");
 
             _activationScheme = NetworkActivationScheme.CreateCyclicFixedTimestepsScheme(2, true);
 
             _eaParams = new NeatEvolutionAlgorithmParameters();
-            _eaParams.ElitismProportion = _elitismProportion.Value;
-            _eaParams.SpecieCount = _specieCount.Value;
+            _eaParams.ElitismProportion = _elitismProportion;
+            _eaParams.SpecieCount = _specieCount;
 
             _neatGenomeParams = new NeatGenomeParameters();
-            _neatGenomeParams.AddConnectionMutationProbability = _AddConnectionMutationProbability.Value;
-            _neatGenomeParams.DeleteConnectionMutationProbability = _DeleteConnectionMutationProbability.Value;
-            _neatGenomeParams.AddNodeMutationProbability = _AddNodeMutationProbability.Value;
-            _neatGenomeParams.ConnectionWeightMutationProbability = _ConnectionWeightMutationProbability.Value;
-            _neatGenomeParams.InitialInterconnectionsProportion = _InitialInterconnectionsProportion.Value;
+            _neatGenomeParams.AddConnectionMutationProbability = _AddConnectionMutationProbability;
+            _neatGenomeParams.DeleteConnectionMutationProbability = _DeleteConnectionMutationProbability;
+            _neatGenomeParams.AddNodeMutationProbability = _AddNodeMutationProbability;
+            _neatGenomeParams.ConnectionWeightMutationProbability = _ConnectionWeightMutationProbability;
+            _neatGenomeParams.InitialInterconnectionsProportion = _InitialInterconnectionsProportion;
             _neatGenomeParams.FeedforwardOnly = _activationScheme.AcyclicNetwork;
 
-            _ea = CreateEvolutionAlgorithm(new AgentListEvaluator(CreateDecoder()), _populationSize.Value);
+            Debug.Log("Creating evaluator");
+            yield return new WaitForSeconds(0.1f);
+            _evaluator = CreateEvaluator();
+
+            Debug.Log("Creating algorithm");
+            yield return new WaitForSeconds(0.1f);
+            _ea = CreateEvolutionAlgorithm(_evaluator, _populationSize);
         }
 
-        public NeatGenomeDecoder CreateDecoder()
+        public void StartEvolution()
+        {
+            _ea.StartContinue();
+        }
+
+        public void StopEvolution()
+        {
+            _ea.Stop();
+        }
+
+        private NeatGenomeDecoder CreateDecoder()
         {
             return new NeatGenomeDecoder(_activationScheme);
         }
 
-        public NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(IGenomeListEvaluator<NeatGenome> evaluator, int populationSize)
+        private IGenomeListEvaluator<NeatGenome> CreateEvaluator()
         {
-            var genomeFactory = new NeatGenomeFactory(_inputCount.Value, _outputCount.Value, _neatGenomeParams);
+            return new AgentListEvaluator(CreateDecoder(), this.gameObject, _agentPref, _tickPerEvalCount);
+        }
+
+        private NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(IGenomeListEvaluator<NeatGenome> evaluator, int populationSize)
+        {
+            var genomeFactory = new NeatGenomeFactory(_inputCount.value, _outputCount.value, _neatGenomeParams);
             var genomeList = genomeFactory.CreateGenomeList(populationSize, 0);
             return CreateEvolutionAlgorithm(evaluator, genomeList);
         }
 
-        public NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(IGenomeListEvaluator<NeatGenome> evaluator, List<NeatGenome> list)
+        private NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(IGenomeListEvaluator<NeatGenome> evaluator, List<NeatGenome> list)
         {
             IDistanceMetric distanceMetric = new ManhattanDistanceMetric(1.0, 0.0, 10.0);
             ISpeciationStrategy<NeatGenome> speciationStrategy = new KMeansClusteringStrategy<NeatGenome>(distanceMetric);
-            IComplexityRegulationStrategy complexityRegulationStrategy = new DefaultComplexityRegulationStrategy(ComplexityCeilingType.Absolute, _complexityThreshold.Value);
+            IComplexityRegulationStrategy complexityRegulationStrategy = new DefaultComplexityRegulationStrategy(ComplexityCeilingType.Absolute, _complexityThreshold);
 
             NeatEvolutionAlgorithm<NeatGenome> neatEvolutionAlgorithm = new NeatEvolutionAlgorithm<NeatGenome>(_eaParams, speciationStrategy, complexityRegulationStrategy);
 
-            var genomeFactory = new NeatGenomeFactory(_inputCount.Value, _outputCount.Value, _neatGenomeParams);
+            var genomeFactory = new NeatGenomeFactory(_inputCount.value, _outputCount.value, _neatGenomeParams);
 
             neatEvolutionAlgorithm.Initialize(evaluator, genomeFactory, list);
 

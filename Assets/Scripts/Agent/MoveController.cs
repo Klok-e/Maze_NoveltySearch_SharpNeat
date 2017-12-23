@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Scripts.Agent
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class MoveController : MonoBehaviour
+    public class MoveController : Abstract.AMoveController
     {
         private Rigidbody _rigidbody;
 
@@ -14,12 +14,12 @@ namespace Scripts.Agent
             _rigidbody = GetComponent<Rigidbody>();
         }
 
-        public void Move(Vector3 vector)
+        public override void Move(Vector3 vector)
         {
-            _rigidbody.AddRelativeForce(vector, ForceMode.Impulse);
+            _rigidbody.AddRelativeForce(new Vector3(0, 0, vector.z), ForceMode.Impulse);
         }
 
-        public void Rotate(Vector3 vector)
+        public override void Rotate(Vector3 vector)
         {
             _rigidbody.AddRelativeTorque(new Vector3(0, vector.y, 0), ForceMode.Impulse);
         }
