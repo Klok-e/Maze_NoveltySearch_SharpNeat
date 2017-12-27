@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,20 +27,6 @@ namespace Scripts.Help
         public static Vector2 RandomVector2()
         {
             return new Vector2(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f)).normalized;
-        }
-
-        public static float AvgSpeedWithPositions(Deque<Vector2> deque)
-        {
-            float distance = 0;
-            for (int i = 0; i < deque.Length - 1; i++)
-            {
-                distance += (deque[i] - deque[i + 1]).magnitude;
-            }
-            if (deque.Length > 0)
-            {
-                return distance / deque.Length;
-            }
-            return 0;
         }
 
         #region Normalize overloads
@@ -98,34 +85,32 @@ namespace Scripts.Help
 
         public class Deque<T>
         {
-            private List<T> internalList;
-            private int size;
+            private Queue<T> q;
 
-            public int Length { get; private set; }
+            public int Length { get; }
+            public int QueueLength { get { return q.Count; } }
 
             public Deque(int size)
             {
-                internalList = new List<T>(size);
-                this.size = size;
-                Length = 0;
+                Length = size;
+                q = new Queue<T>();
             }
 
-            public void Add(T elem)
+            public void Enqueue(T obj)
             {
-                internalList.Add(elem);
-                if (internalList.Count > size)
-                {
-                    internalList.RemoveAt(0);
-                }
-                Length = internalList.Count;
+                q.Enqueue(obj);
+                while (q.Count > Length)
+                    q.Dequeue();
             }
 
-            public T this[int index]
+            public T Dequeue()
             {
-                get
-                {
-                    return internalList[index];
-                }
+                return q.Dequeue();
+            }
+
+            public T Peek()
+            {
+                return q.Peek();
             }
         }
     }

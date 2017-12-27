@@ -51,32 +51,29 @@ namespace Scripts.Agent
 
             _angles = CalculateAngles();
             _allData = new List<float>();
-
-            var state = GetEnvironmentState();
-            _inputCount.value = state.Length;
         }
 
         private List<int> CalculateAngles()
         {
             var angles = new List<int>();
             var mul = 0;
-            for (int i = 0; i < _amountOfWallSensors.value; i++)
+            for (int i = 0; i < _amountOfWallSensors.Value; i++)
             {
                 if (i % 2 == 0)
                 {
-                    angles.Add(90 - _sensorsDensity.value * mul);
+                    angles.Add(90 - _sensorsDensity.Value * mul);
                 }
                 if (i % 2 == 1)
                 {
                     mul += 1;
-                    angles.Add(90 + _sensorsDensity.value * mul);
+                    angles.Add(90 + _sensorsDensity.Value * mul);
                 }
             }
-            if (_amountOfWallSensors.value % 2 != 1)
+            if (_amountOfWallSensors.Value % 2 != 1)
             {
                 for (int i = 0; i < angles.Count; i++)
                 {
-                    angles[i] -= _sensorsDensity.value / 2;//why does it work?
+                    angles[i] -= _sensorsDensity.Value / 2;//why does it work?
                 }
             }
             return angles;
@@ -106,7 +103,7 @@ namespace Scripts.Agent
             }
             Net.Activate();
 
-            Debug.Assert(Net.OutputCount == _outputCount.value);
+            Debug.Assert(Net.OutputCount == _outputCount.Value);
             var prediction = new float[Net.OutputCount];
             for (int i = 0; i < Net.OutputCount; i++)
             {
@@ -123,7 +120,7 @@ namespace Scripts.Agent
 
             #region Raycasts
 
-            var eyesData = new float[_amountOfWallSensors.value, 1];
+            var eyesData = new float[_amountOfWallSensors.Value, 1];
 
             var pos = transform.position;
 
@@ -133,15 +130,16 @@ namespace Scripts.Agent
                 var dir = transform.TransformDirection(new Vector3(Mathf.Cos(Mathf.Deg2Rad * (angle)), 0, Mathf.Sin(Mathf.Deg2Rad * (angle))).normalized);
                 RaycastHit hit;
 
-                bool isHit = Physics.Raycast(pos, dir, out hit, _sensorRange.value);
+                bool isHit = Physics.Raycast(pos, dir, out hit, _sensorRange.Value);
 
                 if (isHit)
                 {
                     Debug.DrawLine(pos, hit.point);
-                    eyesData[count, 0] = 1 - (hit.distance / _sensorRange.value);
+                    eyesData[count, 0] = 1 - (hit.distance / _sensorRange.Value);
                 }
                 else
                 {
+                    eyesData[count, 0] = 1;
                     Debug.DrawRay(pos, dir);
                 }
                 count += 1; //every eye must see distance and what is it

@@ -16,14 +16,8 @@ namespace Scripts.ScriptableObjects.Containers
         {
             get
             {
-                return useConstant ? constantValue : referencedValue.value;
+                return useConstant ? constantValue : referencedValue.Value;
             }
         }
-    }
-
-    [CreateAssetMenu]
-    internal class IntContainer : ScriptableObject
-    {
-        public int value;
     }
 }

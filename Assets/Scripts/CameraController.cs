@@ -14,8 +14,8 @@ public class CameraController : MonoBehaviour
 
         var pos = transform.position;
 
-        var movePlane = new Vector3(move_x, move_y, 0) * _move_speed.value * pos.y;
-        var moveDepth = new Vector3(0, 0, cameraZoom) * _zoom_speed.value * pos.y;
+        var movePlane = new Vector3(move_x, move_y, 0) * _move_speed.Value * pos.y;
+        var moveDepth = new Vector3(0, 0, cameraZoom) * _zoom_speed.Value * pos.y;
 
         transform.Translate(movePlane + moveDepth);
     }

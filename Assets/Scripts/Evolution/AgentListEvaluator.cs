@@ -21,6 +21,9 @@ namespace Scripts.Evolution
         private GameObject _agentPrefab;
         private IntContainer _tickPerEvalCount;
 
+        private Novelty_archive _novelty_Archive;
+        private const float _noveltyThreshold = 1;
+
         private float[] _fitnesses;
 
         #region Cached
@@ -37,6 +40,9 @@ namespace Scripts.Evolution
             _tickPerEvalCount = tickPerEvalCount;
             _evaluationCount = 0;
 
+            _novelty_Archive = new Novelty_archive();
+            _novelty_Archive.Add(Vec3ToVec2(gameObject.transform.position));
+
             UnityThread.InitUnityThread();
         }
 
@@ -45,7 +51,7 @@ namespace Scripts.Evolution
         public ulong EvaluationCount { get { return _evaluationCount; } }
         private ulong _evaluationCount;
 
-        public bool StopConditionSatisfied { get { throw new NotImplementedException(); } }
+        public bool StopConditionSatisfied { get { return false; } }
 
         public void Evaluate(IList<NeatGenome> genomeList)
         {
@@ -85,7 +91,11 @@ namespace Scripts.Evolution
 
         public void Reset()
         {
-            throw new NotImplementedException();
+            try
+            {
+                throw new NotImplementedException();
+            }
+            catch (Exception e) { Debug.Log(e); }
         }
 
         #endregion Interface
@@ -111,7 +121,7 @@ namespace Scripts.Evolution
             }
 
             yield return null;
-            for (int i = 0; i < _tickPerEvalCount.value; i++)
+            for (int i = 0; i < _tickPerEvalCount.Value; i++)
             {
                 foreach (var item in _agents)
                 {
@@ -125,7 +135,33 @@ namespace Scripts.Evolution
 
         private float[] CalculateFitness(Agent.Abstract.AAgentController[] agents)
         {
-            throw new NotImplementedException();
+            var fitnesses = new float[agents.Length];
+
+            var popVectors = new List<Vector2>(agents.Length);
+            foreach (var item in agents)
+            {
+                popVectors.Add(Vec3ToVec2(item.transform.position));
+            }
+
+            for (int i = 0; i < agents.Length; i++)
+            {
+                var vecPos = Vec3ToVec2(agents[i].transform.position);
+
+                var compToArch = _novelty_Archive.CompareToArchive(vecPos, 5);
+                if (compToArch > _noveltyThreshold)
+                {
+                    _novelty_Archive.Add(vecPos);
+                }
+
+                var compToPop = Novelty_archive.CompareToPopulation(popVectors, vecPos, 5);
+                fitnesses[i] = compToArch + compToPop;
+            }
+            return fitnesses;
+        }
+
+        private static Vector2 Vec3ToVec2(Vector3 vector3)
+        {
+            return new Vector2(vector3.x, vector3.z);
         }
     }
 }

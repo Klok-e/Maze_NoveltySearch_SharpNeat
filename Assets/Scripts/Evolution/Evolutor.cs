@@ -70,6 +70,17 @@ namespace Scripts.Evolution
             Debug.Log("Creating algorithm");
             yield return new WaitForSeconds(0.1f);
             _ea = CreateEvolutionAlgorithm(_evaluator, _populationSize);
+            _ea.UpdateEvent += _ea_UpdateEvent;
+        }
+
+        private void _ea_UpdateEvent(object sender, EventArgs e)
+        {
+            Debug.Log(
+                $"Generation: {_ea.CurrentGeneration};" +
+                $" Max complexity: {_ea.Statistics._maxComplexity};" +
+                $" Mean fitness: {_ea.Statistics._meanFitness};" +
+                $" Max fitness: {_ea.Statistics._maxFitness}"
+                );
         }
 
         public void StartEvolution()
@@ -94,7 +105,7 @@ namespace Scripts.Evolution
 
         private NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(IGenomeListEvaluator<NeatGenome> evaluator, int populationSize)
         {
-            var genomeFactory = new NeatGenomeFactory(_inputCount.value, _outputCount.value, _neatGenomeParams);
+            var genomeFactory = new NeatGenomeFactory(_inputCount.Value, _outputCount.Value, _neatGenomeParams);
             var genomeList = genomeFactory.CreateGenomeList(populationSize, 0);
             return CreateEvolutionAlgorithm(evaluator, genomeList);
         }
@@ -107,7 +118,7 @@ namespace Scripts.Evolution
 
             NeatEvolutionAlgorithm<NeatGenome> neatEvolutionAlgorithm = new NeatEvolutionAlgorithm<NeatGenome>(_eaParams, speciationStrategy, complexityRegulationStrategy);
 
-            var genomeFactory = new NeatGenomeFactory(_inputCount.value, _outputCount.value, _neatGenomeParams);
+            var genomeFactory = new NeatGenomeFactory(_inputCount.Value, _outputCount.Value, _neatGenomeParams);
 
             neatEvolutionAlgorithm.Initialize(evaluator, genomeFactory, list);
 
