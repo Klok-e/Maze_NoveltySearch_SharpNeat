@@ -139,7 +139,7 @@ namespace Scripts.Agent
                 }
                 else
                 {
-                    eyesData[count, 0] = 1;
+                    eyesData[count, 0] = 0;
                     Debug.DrawRay(pos, dir);
                 }
                 count += 1; //every eye must see distance and what is it

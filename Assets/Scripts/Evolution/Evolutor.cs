@@ -48,6 +48,7 @@ namespace Scripts.Evolution
         {
             Debug.Assert(_populationSize > 5);
             Debug.Log($"Main thread is {Thread.CurrentThread.ManagedThreadId}");
+            Application.runInBackground = true;
 
             _activationScheme = NetworkActivationScheme.CreateCyclicFixedTimestepsScheme(2, true);
 
